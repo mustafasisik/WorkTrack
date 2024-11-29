@@ -1,0 +1,123 @@
+services:
+  redis:
+    container_name: redis
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks:
+      - mynetwork
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  django:
+    container_name: django
+    build: ./worktrack
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    command: "python manage.py runserver 0.0.0.0:8000"
+    #command: gunicorn worktrack.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    depends_on:
+      - postgresql
+    volumes:
+      - ./worktrack/:/app/
+      - static_volume:/app/static
+      - media_volume:/app/media
+    env_file:
+      - .env
+    networks:
+      - mynetwork
+    restart: always
+
+  channels:
+    container_name: channels
+    build: ./worktrack
+    expose:
+      - "8001"
+    ports:
+      - "8001:8001"
+    command: "daphne -b 0.0.0.0 -p 8001 worktrack.asgi:application"
+    depends_on:
+      - postgresql
+    volumes:
+      - ./worktrack/:/app/
+      - static_volume:/app/static
+      - media_volume:/app/media
+    env_file:
+      - .env
+    networks:
+      - mynetwork
+    restart: always
+
+  celery:
+    container_name: celery
+    build: ./worktrack
+    command: celery -A worktrack worker --loglevel=info
+    volumes:
+      - ./worktrack/:/app/
+      - ./worktrack/logs/celery.log:/app/logs/celery.log
+    depends_on:
+      - django
+    networks:
+      - mynetwork
+    restart: always
+    env_file:
+      - .env
+
+  celery_beat:
+    container_name: celery_beat
+    build: ./worktrack
+    command: celery -A worktrack beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./worktrack/:/app/
+      - ./worktrack/logs/celery.log:/app/logs/celery.log
+    depends_on:
+      - django
+    networks:
+      - mynetwork
+    restart: always
+    env_file:
+      - .env
+
+  postgresql:
+    container_name: postgresql
+    image: postgres:13
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - mynetwork
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    restart: always
+
+  nginx:
+    container_name: nginx
+    build: ./nginx
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    env_file:
+      - .env
+    ports:
+      - "${NGINX_PORT}:80"
+    depends_on:
+      - django
+    networks:
+      - mynetwork
+    restart: always
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  redis_data:

@@ -1,0 +1,106 @@
+<!-- templates/auth/personel_login.html -->
+{% extends 'core/base.html' %}
+
+{% block title %}Executive Sign In{% endblock %}
+
+{% block content %}
+
+<style>
+    .login-container {
+        max-width: 400px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .btn-signin {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .error-message {
+        color: red;
+        margin-top: 10px;
+        display: none;
+    }
+</style>
+
+<div class="login-container">
+    <h2>Staff Sign In</h2>
+    <form id="loginForm" method="post" onsubmit="handleLogin(event)">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-signin">Sign In</button>
+        <div id="errorMessage" class="error-message"></div>
+    </form>
+</div>
+
+<script>
+    async function handleLogin(event) {
+        event.preventDefault();
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('errorMessage');
+
+        try {
+            const response = await fetch('/api/staff/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Successful login
+                window.location.href = '/staff/';
+            } else {
+                // Show error message
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = data.message || 'Invalid username or password';
+            }
+        } catch (error) {
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = 'An error occurred. Please try again.';
+            console.error('Login error:', error);
+        }
+    }
+</script>
+
+{% endblock %}

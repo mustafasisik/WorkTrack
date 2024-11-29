@@ -1,0 +1,29 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h1 class="display-4 mb-4">Welcome to WorkTrack</h1>
+
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Staff Sign In</h5>
+                    <p class="card-text">Access your staff dashboard</p>
+                    <a href="{% url 'core:staff_login' %}" class="btn btn-primary">Staff Sign In</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Executive Sign In</h5>
+                    <p class="card-text">Access executive portal</p>
+                    <a href="{% url 'core:executive_login' %}" class="btn btn-secondary">Executive Sign In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

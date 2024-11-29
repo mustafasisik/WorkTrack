@@ -1,0 +1,436 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Welcome Section -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Welcome, {{ user.username }}</h2>
+                    <p class="card-text">Staff Dashboard</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Requests -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title h5 mb-0">Leave Requests</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group" id="leaveRequestsList">
+                        <!-- Leave requests will be loaded here -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newLeaveRequestModal">
+                        <i class="bi bi-plus"></i> New Leave Request
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Hourly Leave Requests -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title h5 mb-0">Hourly Leave Requests</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group" id="hourlyLeaveRequestsList">
+                        <!-- Leave requests will be loaded here -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="#" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#newHourlyLeaveRequestModal">
+                        <i class="bi bi-plus"></i> New Hourly Leave Request
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Late to work minutes -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title h5 mb-0">Late to Work Minutes</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group" id="lateToWorkMinutesList">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title h5 mb-0">Your Statistics</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h4 class="h6">Hours This Week</h4>
+                                <p class="h3 mb-0">32.5</p>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h4 class="h6">Tasks Completed</h4>
+                                <p class="h3 mb-0">12</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title h5 mb-0">Recent Activity</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Activity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2024-02-20</td>
+                                    <td>Shift Completed</td>
+                                    <td><span class="badge bg-success">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2024-02-19</td>
+                                    <td>Report Submitted</td>
+                                    <td><span class="badge bg-info">Pending Review</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2024-02-18</td>
+                                    <td>Schedule Updated</td>
+                                    <td><span class="badge bg-primary">Confirmed</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch leave requests
+        fetch('http://localhost/api/staff/dashboard/stats/')
+            .then(response => response.json())
+            .then(data => {
+
+                // Leave requests
+                if (data.leave_requests) {
+                    const leaveRequestsList = document.getElementById('leaveRequestsList');
+                    leaveRequestsList.innerHTML = ''; // Clear existing content
+
+                    data.leave_requests.forEach(request => {
+                        console.log(request);
+                        const statusBadgeClass = getStatusBadgeClass(request.status);
+                        const item = document.createElement('div');
+                        item.className = 'list-group-item';
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${request.reason}</h6>
+                                    <small>${formatDate(request.start_date)} - ${formatDate(request.end_date)}</small>
+                                </div>
+                                <span class="badge ${statusBadgeClass}">${request.status}</span>
+                                </div>
+                            `;
+                        leaveRequestsList.appendChild(item);
+                    });
+                }
+
+                // Hourly leave requests
+                if (data.hourly_leave_requests) {
+                    const hourlyLeaveRequestsList = document.getElementById('hourlyLeaveRequestsList');
+                    hourlyLeaveRequestsList.innerHTML = ''; // Clear existing content
+
+                    data.hourly_leave_requests.forEach(request => {
+                        console.log(request);
+                        const statusBadgeClass = getStatusBadgeClass(request.status);
+                        const item = document.createElement('div');
+                        item.className = 'list-group-item';
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${request.reason}</h6>
+                                    <small>${request.start_time} - ${request.end_time}</small>
+                                </div>
+                                <span class="badge ${statusBadgeClass}">${request.status}</span>
+                                </div>
+                            `;
+                        hourlyLeaveRequestsList.appendChild(item);
+                    });
+                }
+
+                console.log(data.late_to_work_minutes);
+                // Late to work minutes
+                if (data.late_to_work_minutes) {
+                    const lateToWorkMinutesList = document.getElementById('lateToWorkMinutesList');
+                    lateToWorkMinutesList.innerHTML = ''; // Clear existing content
+
+                    data.late_to_work_minutes.forEach(request => {
+                        const item = document.createElement('div');
+                        item.className = 'list-group-item';
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <i class="bi bi-clock"></i>
+                                ${request.late_to_work_minutes} minutes
+                            </div>
+                        `;
+                        lateToWorkMinutesList.appendChild(item);
+                    });
+                }
+            })
+            .catch(error => console.error('Error fetching leave requests:', error));
+
+        // Helper function to format date
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        // Helper function to get appropriate badge class
+        function getStatusBadgeClass(status) {
+            switch (status.toLowerCase()) {
+                case 'approved': return 'bg-success';
+                case 'pending': return 'bg-warning';
+                case 'rejected': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+
+        // Handle leave request submission
+        document.getElementById('submitLeaveRequest').addEventListener('click', function () {
+            const form = document.getElementById('leaveRequestForm');
+            const formData = {
+                start_date: form.start_date.value,
+                end_date: form.end_date.value,
+                reason: form.reason.value
+            };
+
+            fetch('/api/leave-requests/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('newLeaveRequestModal'));
+                        modal.hide();
+
+                        // Show success message
+                        showToast('Leave request submitted successfully', 'success');
+
+                        // Refresh the leave requests list
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while submitting the request');
+                });
+        });
+
+        // Handle hourly leave request submission
+        document.getElementById('submitHourlyLeaveRequest').addEventListener('click', function () {
+            const form = document.getElementById('hourlyLeaveRequestForm');
+            const formData = {
+                start_time: form.start_time.value,
+                end_time: form.end_time.value,
+                reason: form.reason.value
+            };
+
+            fetch('/api/hourly-leave-requests/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(JSON.stringify(data));
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.message) {
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('newHourlyLeaveRequestModal'));
+                        modal.hide();
+
+                        // Show success message
+                        showToast('Leave request submitted successfully', 'success');
+
+                        // Refresh the leave requests list
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    try {
+                        const errorData = JSON.parse(error.message);
+                        let errorMessage = 'Validation Error:\n';
+                        for (const [key, value] of Object.entries(errorData.error)) {
+                            errorMessage += `${key}: ${value}\n`;
+                        }
+                        showToast(errorMessage, 'error');
+                    } catch (e) {
+                        showToast('An error occurred while submitting the request', 'error');
+                    }
+                });
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+
+            toastContainer.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', function () {
+                toast.remove();
+            });
+        }
+
+        // Create toast container if it doesn't exist
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        // Helper function to get CSRF token (if not already defined)
+        if (typeof getCookie === 'undefined') {
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        }
+    });
+</script>
+
+<!-- New Leave Request Modal -->
+<div class="modal fade" id="newLeaveRequestModal" tabindex="-1" aria-labelledby="newLeaveRequestModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newLeaveRequestModalLabel">New Leave Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="leaveRequestForm">
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" name="start_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" name="end_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitLeaveRequest">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hourly Leave Request Modal -->
+<div class="modal fade" id="newHourlyLeaveRequestModal" tabindex="-1" aria-labelledby="newHourlyLeaveRequestModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newHourlyLeaveRequestModalLabel">New Hourly Leave Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="hourlyLeaveRequestForm">
+                    <div class="mb-3">
+                        <label for="startTime" class="form-label">Start Time</label>
+                        <input type="time" class="form-control" id="startTime" name="start_time" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="endTime" class="form-label">End Time</label>
+                        <input type="time" class="form-control" id="endTime" name="end_time" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitHourlyLeaveRequest">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
