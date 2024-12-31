@@ -19,6 +19,7 @@ from django.core.exceptions import ValidationError
 
 # Template Views
 
+
 class LogoutView(generic.View):
     def get(self, request):
         if request.user.is_authenticated:
